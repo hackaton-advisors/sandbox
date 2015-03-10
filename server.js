@@ -51,11 +51,21 @@ require('./app/routes')(app); // configure our routes
  // console.log("Listening on " + server_ip_address + ", server_port " + server_port)
 
 //});
-app.set('port', parseInt(process.env.OPENSHIFT_INTERNAL_PORT) || 3000); app.set('ipaddr', process.env.OPENSHIFT_INTERNAL_IP || 127.0.0.1);
-app.listen();               
+//app.set('port', parseInt(process.env.OPENSHIFT_INTERNAL_PORT) || 3000); app.set('ipaddr', process.env.OPENSHIFT_INTERNAL_IP || 127.0.0.1);
+//app.listen();               
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
 
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
+
+
+
+app.listen(server_port, server_ip_address, function(){
+
+  console.log("Listening on " + server_ip_address + ", server_port " + port)
+
+});
 // shoutout to the user                     
-//console.log('Magic happens on port ' + port);
+console.log('Magic happens on port ' + server_port);
 
 // expose app           
 exports = module.exports = app;                         
