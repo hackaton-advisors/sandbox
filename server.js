@@ -1,71 +1,172 @@
-// server.js
-
-// modules =================================================
-var express        = require('express');
-var app            = express();
-var bodyParser     = require('body-parser');
-var methodOverride = require('method-override');
-
-// configuration ===========================================
-    
-// config files
-var db = require('./config/db');
-
-// set our port
-//var port = process.env.PORT || 80;
-//var port = process.env.OPENSHIFT_NODEJS_PORT || 8080  , ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
-
-// connect to our mongoDB database 
-// (uncomment after you enter in your own credentials in config/db.js)
-// mongoose.connect(db.url); 
-
-// get all data/stuff of the body (POST) parameters
-// parse application/json 
-app.use(bodyParser.json()); 
-
-// parse application/vnd.api+json as json
-app.use(bodyParser.json({ type: 'application/vnd.api+json' })); 
-
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: true })); 
-
-// override with the X-HTTP-Method-Override header in the request. simulate DELETE/PUT
-app.use(methodOverride('X-HTTP-Method-Override')); 
-
-// set the static files location /public/img will be /img for users
-app.use(express.static(__dirname + '/public')); 
-
-// routes ==================================================
-require('./app/routes')(app); // configure our routes
-
-// start app ===============================================
-// startup our app at http://localhost:8080
-//var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-
-//var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
+#!/bin/env node
 
 
 
-//app.listen(server_port, server_ip_address, function(){
+var express = require('express');
 
- // console.log("Listening on " + server_ip_address + ", server_port " + server_port)
+var fs      = require('fs');
 
-//});
-//app.set('port', parseInt(process.env.OPENSHIFT_INTERNAL_PORT) || 3000); app.set('ipaddr', process.env.OPENSHIFT_INTERNAL_IP || 127.0.0.1);
-//app.listen();               
-var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-
-var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
+var mongodb = require('mongodb');
 
 
 
-app.listen(server_port, server_ip_address, function(){
+var App = function(){
 
-  console.log("Listening on " + server_ip_address + ", server_port " + port)
 
-});
-// shoutout to the user                     
-console.log('Magic happens on port ' + server_port);
 
-// expose app           
-exports = module.exports = app;                         
+  // Scope
+
+  var self = this;
+
+
+
+  // Setup
+
+  self.dbServer = new mongodb.Server(process.env.OPENSHIFT_MONGODB_DB_HOST,parseInt(process.env.OPENSHIFT_MONGODB_DB_PORT));
+
+  self.db = new mongodb.Db(process.env.OPENSHIFT_APP_NAME, self.dbServer, {auto_reconnect: true});
+
+  self.dbUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME;
+
+  self.dbPass = process.env.OPENSHIFT_MONGODB_DB_PASSWORD;
+
+
+
+  self.ipaddr  = process.env.OPENSHIFT_NODEJS_IP;
+
+  self.port    = parseInt(process.env.OPENSHIFT_NODEJS_PORT) || 8080;
+
+  if (typeof self.ipaddr === "undefined") {
+
+    console.warn('No OPENSHIFT_NODEJS_IP environment variable');
+
+  };
+
+
+
+
+
+
+  // Web app urls
+
+  self.app  = express();
+
+
+
+  //This uses the Connect frameworks body parser to parse the body of the post request
+
+  var bodyParser = require('body-parser');
+
+  var methodOverride = require('method-override');
+
+  // parse application/x-www-form-urlencoded
+
+  self.app.use(bodyParser.urlencoded());
+
+  // parse application/json
+
+  self.app.use(bodyParser.json());
+
+  // override with POST having ?_method=DELETE
+
+  self.app.use(methodOverride('_method'))
+
+
+
+  //define all the url mappings
+
+  self.app.get('/health', self.routes['health']);
+
+  self.app.get('/', self.routes['root']);
+
+  self.app.get('/ws/parks', self.routes['returnAllParks']);
+
+  self.app.get('/ws/parks/park/:id', self.routes['returnAPark']);
+
+  self.app.get('/ws/parks/near', self.routes['returnParkNear']);
+
+  self.app.get('/ws/parks/name/near/:name', self.routes['returnParkNameNear']);
+
+  self.app.post('/ws/parks/park', self.routes['postAPark']);
+
+
+
+  // Logic to open a database connection. We are going to call this outside of app so it is available to all our functions inside.
+
+  self.connectDb = function(callback){
+
+    self.db.open(function(err, db){
+
+      if(err){ throw err };
+
+      self.db.authenticate(self.dbUser, self.dbPass, {authdb: "admin"}, function(err, res){
+
+        if(err){ throw err };
+
+        callback();
+
+      });
+
+    });
+
+  };
+
+  
+
+  
+
+  //starting the nodejs server with express
+
+  self.startServer = function(){
+
+    self.app.listen(self.port, self.ipaddr, function(){
+
+      console.log('%s: Node server started on %s:%d ...', Date(Date.now()), self.ipaddr, self.port);
+
+    });
+
+  }
+
+
+
+  // Destructors
+
+  self.terminator = function(sig) {
+
+    if (typeof sig === "string") {
+
+      console.log('%s: Received %s - terminating Node server ...', Date(Date.now()), sig);
+
+      process.exit(1);
+
+    };
+
+    console.log('%s: Node server stopped.', Date(Date.now()) );
+
+  };
+
+
+
+  process.on('exit', function() { self.terminator(); });
+
+
+
+  self.terminatorSetup = function(element, index, array) {
+
+    process.on(element, function() { self.terminator(element); });
+
+  };
+
+
+
+  ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGPIPE', 'SIGTERM'].forEach(self.terminatorSetup);
+
+
+
+};
+
+
+
+//make a new express app
+
+var app = new App();
