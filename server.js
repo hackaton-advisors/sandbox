@@ -14,6 +14,7 @@ var db = require('./config/db');
 // set our port
 //var port = process.env.PORT || 8080; 
 var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+var server = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
 // connect to our mongoDB database 
 // (uncomment after you enter in your own credentials in config/db.js)
 // mongoose.connect(db.url); 
@@ -39,7 +40,7 @@ require('./app/routes')(app); // configure our routes
 
 // start app ===============================================
 // startup our app at http://localhost:8080
-app.listen(port);               
+app.listen(port, server);               
 
 // shoutout to the user                     
 console.log('Magic happens on port ' + port);
