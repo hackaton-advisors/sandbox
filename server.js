@@ -52,10 +52,10 @@ require('./app/routes')(app); // configure our routes
 
 //});
 app.set('port', parseInt(process.env.OPENSHIFT_INTERNAL_PORT) || 3000); app.set('ipaddr', process.env.OPENSHIFT_INTERNAL_IP || 127.0.0.1);
-app.listen(port);               
+app.listen();               
 
 // shoutout to the user                     
-console.log('Magic happens on port ' + port);
+//console.log('Magic happens on port ' + port);
 
 // expose app           
 exports = module.exports = app;                         
