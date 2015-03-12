@@ -24,6 +24,36 @@
     
     <script src="libs/Chart.js/Chart.js"></script>
     <script src="libs/angular-chart.js/angular-chart.js"></script>
+    
+	<script src="/libs/d3/d3.js"></script>
+	<script src="/libs/angular-charts/dist/angular-charts.js"></script>
+    <script src="main.controller.js"></script>
+
+    	<style type="text/css">
+		body {
+			font-family: "helvetica";
+			color : #333;
+		}
+		[ac-chart] {
+			float:left;
+			width: 48%;
+			height: 400px;
+			margin: 0 1%;
+		}
+
+        .ac-tooltip {
+            color: black;
+            border: 2px solid rgba(200,200,0,0.8);
+            background-color: rgba(200,200,0,0.5);
+        }
+
+        #chart1 .ac-legend-box {
+            border-radius: 10px;
+        }
+
+
+
+	</style>
 </head>
 <body ng-app="advisorDashboard" ng-controller="FundDataController">
 <div class="container">
@@ -39,10 +69,10 @@
             <li><a href="/funddata">FundData</a></li>
         </ul>
         <ul class="nav navbar-nav">
-            <li><a href="/charts">FundData</a></li>
+            <li><a href="/angular-charts-examples">Charts</a></li>
         </ul>
         <ul class="nav navbar-nav">
-            <li><a href="/maps">FundData</a></li>
+            <li><a href="/maps">Maps</a></li>
         </ul>
     </nav>
 

@@ -13,8 +13,8 @@ var db = require('./config/db');
 
 // set our port
 //var port = process.env.PORT || 8080; 
-var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
-var server = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
+var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT;
+var server = process.env.OPENSHIFT_NODEJS_IP || process.env.IP;
 // connect to our mongoDB database 
 // (uncomment after you enter in your own credentials in config/db.js)
 // mongoose.connect(db.url); 
